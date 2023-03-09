@@ -81,3 +81,37 @@ See µSockets for an up-to-date list of flags and a more detailed explanation.
 Intellectual property, all rights reserved.
 
 Where such explicit notice is given, source code is licensed Apache License 2.0 which is a permissive OSI-approved license with very few limitations. Modified "forks" should be of nothing but licensed source code, and be made available under another product name. If you're uncertain about any of this, please ask before assuming.
+
+**CMake support**
+
+To simplify integration in CMake-based environments, support with additional options to enable/disable OpenSSL and LibUV is available. Possible command line options:
+
+* ENABLE_OPENSSL: boolean (ON/OFF); default: OFF
+* ENABLE_LIBUV: boolean (ON/OFF); default: OFF
+* BUILD_EXAMPLES: boolean (ON/OFF); default: OFF
+
+Common usage (with defaults):
+
+```sh
+mkdir build && cd build
+cmake ..
+cmake --build .
+cmake --install .
+```
+
+Usage with options - all explicitly enabled:
+
+```sh
+mkdir build && cd build
+cmake -DENABLE_OPENSSL=ON -DENABLE_LIBUV=ON -DBUILD_EXAMPLES=ON ..
+cmake --build .
+cmake --install .
+```
+
+*Hint:*
+The generic cmake `--build` and `--install` calls may need a CMake version 3.15 or higher.
+Older versions (3.11+) can be used the usual way using the generated Makefile targets:
+```sh
+make
+make install
+```
