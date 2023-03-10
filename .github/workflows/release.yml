@@ -13,6 +13,7 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v2
@@ -20,27 +21,38 @@ jobs:
           submodules: recursive
       - name: Extract tag name
         id: get_tag
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: echo "tag=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
       - name: Set filename
         id: filename
-        run: echo "archive=uWebSockets-${{steps.get_tag.outputs.tag}}.tar.gz" >> $GITHUB_OUTPUT
+        run: |
+          echo "archive=uWebSockets-${{steps.get_tag.outputs.tag}}.tar.gz" >> $GITHUB_OUTPUT
+          echo "archive_with_boring_ssl=uWebSockets-with-boring-ssl-${{steps.get_tag.outputs.tag}}.tar.gz" >> $GITHUB_OUTPUT
       - name: Create source distribution
         run: |
           set -x
           git submodule update --init
           git rev-parse HEAD > revision.txt
           
-          NAME="uWebSockets-${{steps.get_tag.outputs.tag}}"
+          RELEASE_NAME="uWebSockets-${{steps.get_tag.outputs.tag}}"
+          RELEASE_NAME_WITH_BORING="uWebSockets-with-boring-ssl${{steps.get_tag.outputs.tag}}"
           
-          mkdir "/tmp/${NAME}"
-          cp -r * "/tmp/$NAME"
-          mv "/tmp/${NAME}" .
+          mkdir "/tmp/${RELEASE_NAME}"
+          cp -r * "/tmp/${RELEASE_NAME}"
+          mv "/tmp/${RELEASE_NAME}" .
+          
+          mkdir "/tmp/${RELEASE_NAME_WITH_BORING}"
+          cp -r * "/tmp/${RELEASE_NAME_WITH_BORING}"
+          mv "/tmp/${RELEASE_NAME_WITH_BORING}" .
           
           # Cleanup
-          find "${NAME}" -name '.git*' -exec rm -rv {} \; || true
+          find "${RELEASE_NAME}" -name '.git*' -exec rm -rv {} \; || true
+          rm -rf ${RELEASE_NAME}/uSockets/boringssl
+          
+          find "${RELEASE_NAME_WITH_BORING}" -name '.git*' -exec rm -rv {} \; || true
           
           # Archive
-          tar -czf ${{steps.filename.outputs.archive}} "${NAME}"
+          tar -czf ${{steps.filename.outputs.archive}} "${RELEASE_NAME}"
+          tar -czf ${{steps.filename.outputs.archive_with_boring_ssl}} "${RELEASE_NAME_WITH_BORING}"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -52,7 +64,8 @@ jobs:
           body: |
             uWebSockets forked with CMake integration
 
-            - ${{steps.filename.outputs.archive}} contains all source files including the submodules
+            - ${{steps.filename.outputs.archive}} contains all source files including the submodules excluding boring SSL
+            - ${{steps.filename.outputs.archive_with_boring_ssl}} contains all source files including the submodules
           draft: false
           prerelease: false
       - name: Upload source distribution
@@ -63,4 +76,13 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./${{steps.filename.outputs.archive}}
           asset_name: ${{steps.filename.outputs.archive}}
+          asset_content_type: application/tar.gz
+      - name: Upload source distribution with boring ssl
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{steps.filename.outputs.archive_with_boring_ssl}}
+          asset_name: ${{steps.filename.outputs.archive_with_boring_ssl}}
           asset_content_type: application/tar.gz
