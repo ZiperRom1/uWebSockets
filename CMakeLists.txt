@@ -11,8 +11,11 @@ include(CheckFunctionExists)
 include(CMakePackageConfigHelpers)
 
 # -- CMake build options
-option(ENABLE_OPENSSL "Enable OpenSSL support" OFF)
-option(ENABLE_LIBUV "Enable LibUV support" OFF)
+option(WITH_ZLIB "Enable ZLIB support" OFF)
+option(WITH_OPENSSL "Enable OpenSSL support" OFF)
+option(WITH_LIBUV "Enable LibUV support" OFF)
+option(WITH_QUIC "Enable experimental Http3 examples" OFF)
+option(WITH_PROXY "Enable PROXY Protocol v2 support" OFF)
 option(BUILD_EXAMPLES "Build examples" OFF)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
@@ -22,10 +25,14 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
 # -- Compression
-find_package(ZLIB REQUIRED)
+if (WITH_ZLIB)
+    find_package(ZLIB REQUIRED)
+else ()
+    add_compile_definitions(UWS_NO_ZLIB)
+endif ()
 
 # -- SSL support?
-if (ENABLE_OPENSSL)
+if (WITH_OPENSSL)
     find_package(OpenSSL REQUIRED)
     add_compile_definitions(LIBUS_USE_OPENSSL)
 else ()
@@ -34,9 +41,21 @@ endif ()
 #add_compile_definitions(LIBUS_USE_WOLFSSL)
 
 # -- LibUV support?
-if (ENABLE_LIBUV)
-    find_package(LibUV REQUIRED)
+if (WITH_LIBUV)
+    find_package(libuv CONFIG REQUIRED)
     add_compile_definitions(LIBUS_USE_LIBUV)
+endif ()
+
+# -- QUIC support?
+if (WITH_QUIC)
+    find_package(ZLIB REQUIRED)
+    find_package(Threads REQUIRED)
+    add_compile_definitions(LIBUS_USE_QUIC)
+endif ()
+
+# -- Proxy support?
+if (WITH_PROXY)
+    add_compile_definitions(UWS_WITH_PROXY)
 endif ()
 
 # -- Linux: Common location of cmake package files
@@ -53,13 +72,13 @@ set(${PROJECT_NAME}_SOURCES_LIB
     )
 
 # -- Optional sources
-if (ENABLE_OPENSSL)
+if (WITH_OPENSSL)
     list(APPEND ${PROJECT_NAME}_SOURCES_LIB
         "${CMAKE_CURRENT_LIST_DIR}/uSockets/src/crypto/openssl.c"
         "${CMAKE_CURRENT_LIST_DIR}/uSockets/src/crypto/sni_tree.cpp")
 endif ()
 
-if (ENABLE_LIBUV)
+if (WITH_LIBUV)
     list(APPEND ${PROJECT_NAME}_SOURCES_LIB
         "${CMAKE_CURRENT_LIST_DIR}/uSockets/src/eventing/libuv.c")
 endif ()
@@ -80,8 +99,8 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-    ${OPENSSL_LIBRARIES}
-    ${LIBUV_LIBRARIES})
+    uv
+    ${OPENSSL_LIBRARIES})
 
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
