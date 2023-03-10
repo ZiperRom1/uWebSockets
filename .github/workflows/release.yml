@@ -26,7 +26,7 @@ jobs:
         id: filename
         run: |
           echo "archive=uWebSockets-${{steps.get_tag.outputs.tag}}.tar.gz" >> $GITHUB_OUTPUT
-          echo "archive_with_boring_ssl=uWebSockets-with-boring-ssl-${{steps.get_tag.outputs.tag}}.tar.gz" >> $GITHUB_OUTPUT
+          echo "archive_with_all_submodules=uWebSockets-with-all-submodules-${{steps.get_tag.outputs.tag}}.tar.gz" >> $GITHUB_OUTPUT
       - name: Create source distribution
         run: |
           set -x
@@ -34,25 +34,26 @@ jobs:
           git rev-parse HEAD > revision.txt
           
           RELEASE_NAME="uWebSockets-${{steps.get_tag.outputs.tag}}"
-          RELEASE_NAME_WITH_BORING="uWebSockets-with-boring-ssl${{steps.get_tag.outputs.tag}}"
+          RELEASE_NAME_WITH_ALL_SUBMODULES="uWebSockets-with-all-submodules-${{steps.get_tag.outputs.tag}}"
           
           mkdir "/tmp/${RELEASE_NAME}"
           cp -r * "/tmp/${RELEASE_NAME}"
           mv "/tmp/${RELEASE_NAME}" .
           
-          mkdir "/tmp/${RELEASE_NAME_WITH_BORING}"
-          cp -r * "/tmp/${RELEASE_NAME_WITH_BORING}"
-          mv "/tmp/${RELEASE_NAME_WITH_BORING}" .
+          mkdir "/tmp/${RELEASE_NAME_WITH_ALL_SUBMODULES}"
+          cp -r * "/tmp/${RELEASE_NAME_WITH_ALL_SUBMODULES}"
+          mv "/tmp/${RELEASE_NAME_WITH_ALL_SUBMODULES}" .
           
           # Cleanup
           find "${RELEASE_NAME}" -name '.git*' -exec rm -rv {} \; || true
-          rm -rf ${RELEASE_NAME}/uSockets/boringssl
+          rm -rf ${RELEASE_NAME}/uSockets/boringssl ${RELEASE_NAME}/uSockets/lsquic ${RELEASE_NAME}/fuzzing/seed-corpus \
+          ${RELEASE_NAME}/fuzzing/libEpollFuzzer
           
-          find "${RELEASE_NAME_WITH_BORING}" -name '.git*' -exec rm -rv {} \; || true
+          find "${RELEASE_NAME_WITH_ALL_SUBMODULES}" -name '.git*' -exec rm -rv {} \; || true
           
           # Archive
           tar -czf ${{steps.filename.outputs.archive}} "${RELEASE_NAME}"
-          tar -czf ${{steps.filename.outputs.archive_with_boring_ssl}} "${RELEASE_NAME_WITH_BORING}"
+          tar -czf ${{steps.filename.outputs.archive_with_all_submodules}} "${RELEASE_NAME_WITH_ALL_SUBMODULES}"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -64,8 +65,8 @@ jobs:
           body: |
             uWebSockets forked with CMake integration
 
-            - ${{steps.filename.outputs.archive}} contains all source files including the submodules excluding boring SSL
-            - ${{steps.filename.outputs.archive_with_boring_ssl}} contains all source files including the submodules
+            - ${{steps.filename.outputs.archive}} contains all source files including the uwebsocket submodule
+            - ${{steps.filename.outputs.archive_with_all_submodules}} contains all source files including all the submodules
           draft: false
           prerelease: false
       - name: Upload source distribution
@@ -83,6 +84,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{steps.filename.outputs.archive_with_boring_ssl}}
-          asset_name: ${{steps.filename.outputs.archive_with_boring_ssl}}
+          asset_path: ./${{steps.filename.outputs.archive_with_all_submodules}}
+          asset_name: ${{steps.filename.outputs.archive_with_all_submodules}}
           asset_content_type: application/tar.gz
