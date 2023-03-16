@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.23)
 
 #-------------------------------------------------------------------------------------------------------
 # Options
@@ -225,6 +225,44 @@ set(SOURCE_FILES
     ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/eventing/gcd.c
     )
 
+set(HEADERS_FILES
+    ${CMAKE_CURRENT_LIST_DIR}/src/App.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/AsyncSocket.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/AsyncSocketData.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/BloomFilter.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/ChunkedEncoding.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/ClientApp.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/Http3App.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/Http3Context.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/Http3ContextData.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/Http3Request.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/Http3Response.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/Http3ResponseData.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/HttpContext.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/HttpContextData.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/HttpParser.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/HttpResponse.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/HttpResponseData.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/HttpRouter.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/Loop.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/LoopData.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/MessageParser.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/MoveOnlyFunction.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/Multipart.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/PerMessageDeflate.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/ProxyParser.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/QueryParser.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/TopicTree.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/Utilities.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/WebSocket.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/WebSocketContext.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/WebSocketContextData.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/WebSocketData.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/WebSocketExtensions.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/WebSocketHandshake.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/WebSocketProtocol.h
+    )
+
 # Optional sources
 if (WITH_OPENSSL)
     list(APPEND SOURCE_FILES
@@ -253,6 +291,7 @@ endif ()
 
 # Add target sources
 target_sources(${TARGET_NAME} PRIVATE ${SOURCE_FILES})
+target_sources(${TARGET_NAME} PUBLIC FILE_SET HEADERS TYPE HEADERS BASE_DIRS src FILES ${HEADERS_FILES})
 
 # Compilations definitions
 if (WITH_ZLIB)
@@ -312,7 +351,7 @@ set(UWEBSOCKETS_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/uwebsockets CACHE STRING
 set(UWEBSOCKETS_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE STRING
     "Installation directory for libraries, relative to ${CMAKE_INSTALL_PREFIX}.")
 
-set(UWEBSOCKETS_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE STRING
+set(UWEBSOCKETS_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR}/uwebsockets CACHE STRING
     "Installation directory for include files, relative to ${CMAKE_INSTALL_PREFIX}.")
 
 set(UWEBSOCKETS_PKGCONFIG_DIR ${CMAKE_INSTALL_PREFIX}/pkgconfig CACHE PATH
@@ -344,14 +383,11 @@ install(FILES ${project_config} ${version_config}
 install(TARGETS ${TARGET_NAME} EXPORT ${targets_export_name}
     LIBRARY DESTINATION ${UWEBSOCKETS_LIB_DIR}
     ARCHIVE DESTINATION ${UWEBSOCKETS_LIB_DIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    FILE_SET HEADERS DESTINATION ${UWEBSOCKETS_INC_DIR})
 
 # Export the library
-install(EXPORT ${targets_export_name} DESTINATION ${UWEBSOCKETS_CMAKE_DIR}
-    NAMESPACE uWS::)
-
-# Copy the headers
-install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/src DESTINATION ${UWEBSOCKETS_INC_DIR})
+install(EXPORT ${targets_export_name} DESTINATION ${UWEBSOCKETS_CMAKE_DIR} NAMESPACE uwebsockets::)
 
 # Copy pkgconfig
 install(FILES "${pkgconfig}" DESTINATION "${UWEBSOCKETS_PKGCONFIG_DIR}")
