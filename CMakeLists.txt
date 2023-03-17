@@ -29,7 +29,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake" CAC
 
 set(UWEBSOCKETS_VERSION 20.37.0)
 
-project(uwebsockets VERSION ${UWEBSOCKETS_VERSION} LANGUAGES CXX)
+project(uwebsockets VERSION ${UWEBSOCKETS_VERSION} LANGUAGES CXX C)
 
 #-------------------------------------------------------------------------------------------------------
 # Set default build to release
@@ -161,7 +161,7 @@ endif ()
 #-------------------------------------------------------------------------------------------------------
 
 # library name
-set(TARGET_NAME uwebsockets)
+set(TARGET_NAME UWS)
 
 set(SOURCE_FILES
     ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/bsd.c
@@ -241,7 +241,7 @@ target_sources(${TARGET_NAME} PRIVATE ${SOURCE_FILES})
 target_sources(${TARGET_NAME} PUBLIC FILE_SET HEADERS BASE_DIRS src FILES ${HEADERS_FILES})
 
 # Compilations definitions
-if (WITH_ZLIB)
+if (NOT WITH_ZLIB)
     target_compile_definitions(${TARGET_NAME} PUBLIC UWS_NO_ZLIB)
 endif ()
 
@@ -338,7 +338,7 @@ install(TARGETS ${TARGET_NAME} EXPORT ${targets_export_name}
     FILE_SET HEADERS DESTINATION ${UWEBSOCKETS_INC_DIR})
 
 # Export the library
-install(EXPORT ${targets_export_name} DESTINATION ${UWEBSOCKETS_CMAKE_DIR} NAMESPACE uwebsockets::)
+install(EXPORT ${targets_export_name} DESTINATION ${UWEBSOCKETS_CMAKE_DIR} NAMESPACE UWS::)
 
 # Copy pkgconfig
 install(FILES "${pkgconfig}" DESTINATION "${UWEBSOCKETS_PKGCONFIG_DIR}")
