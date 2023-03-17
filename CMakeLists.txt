@@ -161,7 +161,7 @@ endif ()
 #-------------------------------------------------------------------------------------------------------
 
 # library name
-set(TARGET_NAME UWS)
+set(TARGET_NAME uws)
 
 set(SOURCE_FILES
     ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/bsd.c
@@ -338,7 +338,7 @@ install(TARGETS ${TARGET_NAME} EXPORT ${targets_export_name}
     FILE_SET HEADERS DESTINATION ${UWEBSOCKETS_INC_DIR})
 
 # Export the library
-install(EXPORT ${targets_export_name} DESTINATION ${UWEBSOCKETS_CMAKE_DIR} NAMESPACE UWS::)
+install(EXPORT ${targets_export_name} DESTINATION ${UWEBSOCKETS_CMAKE_DIR} NAMESPACE uws::)
 
 # Copy pkgconfig
 install(FILES "${pkgconfig}" DESTINATION "${UWEBSOCKETS_PKGCONFIG_DIR}")
