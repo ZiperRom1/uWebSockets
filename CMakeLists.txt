@@ -14,6 +14,7 @@ option(BUILD_EXAMPLES "Build examples" OFF)
 #-------------------------------------------------------------------------------------------------------
 # Use newer policies if possible, up to most recent tested version of CMake.
 #-------------------------------------------------------------------------------------------------------
+
 cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 
 #-------------------------------------------------------------------------------------------------------
@@ -71,11 +72,11 @@ if (WITH_QUIC)
     find_package(Threads REQUIRED)
 endif ()
 
-
 #-------------------------------------------------------------------------------------------------------
 # Examples
 #-------------------------------------------------------------------------------------------------------
 
+# @todo This section should have its proper CMakeLists.txt and just be a call to include(examples/CMakeLists.txt)
 if (BUILD_EXAMPLES)
     # -- Threading
     set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -83,130 +84,76 @@ if (BUILD_EXAMPLES)
     find_package(Threads REQUIRED)
 
     # -- Common definitions
-    set(EXAMPLES_LIBS
-        ${ZLIB_LIBRARIES} ${OPENSSL_LIBRARIES} uv uwebsockets)
+    set(EXAMPLES_LIBS ${ZLIB_LIBRARIES} ${OPENSSL_LIBRARIES} uwebsockets)
+    set(EXAMPLES_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/uSockets/src ${CMAKE_CURRENT_LIST_DIR}/src)
 
-    set(EXAMPLES_INCLUDES
-        ${CMAKE_CURRENT_LIST_DIR}/uSockets/src ${CMAKE_CURRENT_LIST_DIR}/src)
+    if (WITH_ZLIB)
+        list(APPEND EXAMPLES_LIBS ${ZLIB_LIBRARIES})
+    endif ()
+
+    if (WITH_OPENSSL)
+        list(APPEND EXAMPLES_LIBS ${OPENSSL_LIBRARIES})
+    endif ()
+
+    if (WITH_LIBUV)
+        list(APPEND EXAMPLES_LIBS uv)
+    endif ()
 
     # -- Echo Server
-    add_executable(uwebsockets-echoserver
-        ${CMAKE_CURRENT_LIST_DIR}/examples/EchoServer.cpp)
-
-    target_include_directories(uwebsockets-echoserver
-        PRIVATE ${EXAMPLES_INCLUDES})
-
-    target_link_libraries(uwebsockets-echoserver
-        PRIVATE ${EXAMPLES_LIBS})
-
-    install(TARGETS uwebsockets-echoserver
-        RUNTIME DESTINATION bin)
+    add_executable(uwebsockets-echoserver ${CMAKE_CURRENT_LIST_DIR}/examples/EchoServer.cpp)
+    target_include_directories(uwebsockets-echoserver PRIVATE ${EXAMPLES_INCLUDES})
+    target_link_libraries(uwebsockets-echoserver PRIVATE ${EXAMPLES_LIBS})
+    install(TARGETS uwebsockets-echoserver RUNTIME DESTINATION bin)
 
     # -- Echo Server threaded
-    add_executable(uwebsockets-echoserverthreaded
-        ${CMAKE_CURRENT_LIST_DIR}/examples/EchoServerThreaded.cpp)
-
-    target_include_directories(uwebsockets-echoserverthreaded
-        PRIVATE ${EXAMPLES_INCLUDES})
-
-    target_link_libraries(uwebsockets-echoserverthreaded
-        PRIVATE ${EXAMPLES_LIBS} Threads::Threads)
-
-    install(TARGETS uwebsockets-echoserverthreaded
-        RUNTIME DESTINATION bin)
+    add_executable(uwebsockets-echoserverthreaded ${CMAKE_CURRENT_LIST_DIR}/examples/EchoServerThreaded.cpp)
+    target_include_directories(uwebsockets-echoserverthreaded PRIVATE ${EXAMPLES_INCLUDES})
+    target_link_libraries(uwebsockets-echoserverthreaded PRIVATE ${EXAMPLES_LIBS} Threads::Threads)
+    install(TARGETS uwebsockets-echoserverthreaded RUNTIME DESTINATION bin)
 
     # -- Broadcasting Echo Server
-    add_executable(uwebsockets-broadcastingechoserver
-        ${CMAKE_CURRENT_LIST_DIR}/examples/BroadcastingEchoServer.cpp)
-
-    target_include_directories(uwebsockets-broadcastingechoserver
-        PRIVATE ${EXAMPLES_INCLUDES})
-
-    target_link_libraries(uwebsockets-broadcastingechoserver
-        PRIVATE ${EXAMPLES_LIBS})
-
-    install(TARGETS uwebsockets-broadcastingechoserver
-        RUNTIME DESTINATION bin)
+    add_executable(uwebsockets-broadcastingechoserver ${CMAKE_CURRENT_LIST_DIR}/examples/BroadcastingEchoServer.cpp)
+    target_include_directories(uwebsockets-broadcastingechoserver PRIVATE ${EXAMPLES_INCLUDES})
+    target_link_libraries(uwebsockets-broadcastingechoserver PRIVATE ${EXAMPLES_LIBS})
+    install(TARGETS uwebsockets-broadcastingechoserver RUNTIME DESTINATION bin)
 
     # -- Hello World
-    add_executable(uwebsockets-helloworld
-        ${CMAKE_CURRENT_LIST_DIR}/examples/HelloWorld.cpp)
-
-    target_include_directories(uwebsockets-helloworld
-        PRIVATE ${EXAMPLES_INCLUDES})
-
-    target_link_libraries(uwebsockets-helloworld
-        PRIVATE ${EXAMPLES_LIBS})
-
-    install(TARGETS uwebsockets-helloworld
-        RUNTIME DESTINATION bin)
+    add_executable(uwebsockets-helloworld ${CMAKE_CURRENT_LIST_DIR}/examples/HelloWorld.cpp)
+    target_include_directories(uwebsockets-helloworld PRIVATE ${EXAMPLES_INCLUDES})
+    target_link_libraries(uwebsockets-helloworld PRIVATE ${EXAMPLES_LIBS})
+    install(TARGETS uwebsockets-helloworld RUNTIME DESTINATION bin)
 
     # -- Hello World Threaded
-    add_executable(uwebsockets-helloworldthreaded
-        ${CMAKE_CURRENT_LIST_DIR}/examples/HelloWorldThreaded.cpp)
-
-    target_include_directories(uwebsockets-helloworldthreaded
-        PRIVATE ${EXAMPLES_INCLUDES})
-
-    target_link_libraries(uwebsockets-helloworldthreaded
-        PRIVATE ${EXAMPLES_LIBS} Threads::Threads)
-
-    install(TARGETS uwebsockets-helloworldthreaded
-        RUNTIME DESTINATION bin)
+    add_executable(uwebsockets-helloworldthreaded ${CMAKE_CURRENT_LIST_DIR}/examples/HelloWorldThreaded.cpp)
+    target_include_directories(uwebsockets-helloworldthreaded PRIVATE ${EXAMPLES_INCLUDES})
+    target_link_libraries(uwebsockets-helloworldthreaded PRIVATE ${EXAMPLES_LIBS} Threads::Threads)
+    install(TARGETS uwebsockets-helloworldthreaded RUNTIME DESTINATION bin)
 
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0)
         # -- HTTP Server (Needs compiler support for filesystem)
-        add_executable(uwebsockets-httpserver
-            ${CMAKE_CURRENT_LIST_DIR}/examples/HttpServer.cpp)
-
-        target_include_directories(uwebsockets-httpserver
-            PRIVATE ${EXAMPLES_INCLUDES})
-
-        target_link_libraries(uwebsockets-httpserver
-            PRIVATE ${EXAMPLES_LIBS} Threads::Threads)
-
-        install(TARGETS uwebsockets-httpserver
-            RUNTIME DESTINATION bin)
+        add_executable(uwebsockets-httpserver ${CMAKE_CURRENT_LIST_DIR}/examples/HttpServer.cpp)
+        target_include_directories(uwebsockets-httpserver PRIVATE ${EXAMPLES_INCLUDES})
+        target_link_libraries(uwebsockets-httpserver PRIVATE ${EXAMPLES_LIBS} Threads::Threads)
+        install(TARGETS uwebsockets-httpserver RUNTIME DESTINATION bin)
     endif ()
 
     # -- Server Name
-    add_executable(uwebsockets-servername
-        ${CMAKE_CURRENT_LIST_DIR}/examples/ServerName.cpp)
-
-    target_include_directories(uwebsockets-servername
-        PRIVATE ${EXAMPLES_INCLUDES})
-
-    target_link_libraries(uwebsockets-servername
-        PRIVATE ${EXAMPLES_LIBS})
-
-    install(TARGETS uwebsockets-servername
-        RUNTIME DESTINATION bin)
+    add_executable(uwebsockets-servername ${CMAKE_CURRENT_LIST_DIR}/examples/ServerName.cpp)
+    target_include_directories(uwebsockets-servername PRIVATE ${EXAMPLES_INCLUDES})
+    target_link_libraries(uwebsockets-servername PRIVATE ${EXAMPLES_LIBS})
+    install(TARGETS uwebsockets-servername RUNTIME DESTINATION bin)
 
     # -- Upgrade Async
-    add_executable(uwebsockets-upgradeasync
-        ${CMAKE_CURRENT_LIST_DIR}/examples/UpgradeAsync.cpp)
-
-    target_include_directories(uwebsockets-upgradeasync
-        PRIVATE ${EXAMPLES_INCLUDES})
-
-    target_link_libraries(uwebsockets-upgradeasync
-        PRIVATE ${EXAMPLES_LIBS})
-
-    install(TARGETS uwebsockets-upgradeasync
-        RUNTIME DESTINATION bin)
+    add_executable(uwebsockets-upgradeasync ${CMAKE_CURRENT_LIST_DIR}/examples/UpgradeAsync.cpp)
+    target_include_directories(uwebsockets-upgradeasync PRIVATE ${EXAMPLES_INCLUDES})
+    target_link_libraries(uwebsockets-upgradeasync PRIVATE ${EXAMPLES_LIBS})
+    install(TARGETS uwebsockets-upgradeasync RUNTIME DESTINATION bin)
 
     # -- Upgrade Sync
-    add_executable(uwebsockets-upgradesync
-        ${CMAKE_CURRENT_LIST_DIR}/examples/UpgradeSync.cpp)
-
-    target_include_directories(uwebsockets-upgradesync
-        PRIVATE ${EXAMPLES_INCLUDES})
-
-    target_link_libraries(uwebsockets-upgradesync
-        PRIVATE ${EXAMPLES_LIBS})
-
-    install(TARGETS uwebsockets-upgradesync
-        RUNTIME DESTINATION bin)
+    add_executable(uwebsockets-upgradesync ${CMAKE_CURRENT_LIST_DIR}/examples/UpgradeSync.cpp)
+    target_include_directories(uwebsockets-upgradesync PRIVATE ${EXAMPLES_INCLUDES})
+    target_link_libraries(uwebsockets-upgradesync PRIVATE ${EXAMPLES_LIBS})
+    install(TARGETS uwebsockets-upgradesync RUNTIME DESTINATION bin)
 endif ()
 
 #-------------------------------------------------------------------------------------------------------
@@ -223,6 +170,7 @@ set(SOURCE_FILES
     ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/socket.c
     ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/eventing/epoll_kqueue.c
     ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/eventing/gcd.c
+    ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/libusockets.h
     )
 
 set(HEADERS_FILES
@@ -271,8 +219,7 @@ if (WITH_OPENSSL)
 endif ()
 
 if (WITH_LIBUV)
-    list(APPEND SOURCE_FILES
-        ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/eventing/libuv.c)
+    list(APPEND SOURCE_FILES ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/eventing/libuv.c)
 endif ()
 
 if (BUILD_SHARED_LIBS)
@@ -291,7 +238,7 @@ endif ()
 
 # Add target sources
 target_sources(${TARGET_NAME} PRIVATE ${SOURCE_FILES})
-target_sources(${TARGET_NAME} PUBLIC FILE_SET HEADERS TYPE HEADERS BASE_DIRS src FILES ${HEADERS_FILES})
+target_sources(${TARGET_NAME} PUBLIC FILE_SET HEADERS BASE_DIRS src FILES ${HEADERS_FILES})
 
 # Compilations definitions
 if (WITH_ZLIB)
@@ -317,12 +264,16 @@ if (WITH_PROXY)
 endif ()
 
 # Link
+if (WITH_ZLIB)
+    target_link_libraries(${TARGET_NAME} PRIVATE ${ZLIB_LIBRARIES})
+endif ()
+
 if (WITH_OPENSSL)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENSSL_LIBRARIES})
+    target_link_libraries(${TARGET_NAME} PRIVATE ${OPENSSL_LIBRARIES})
 endif ()
 
 if (WITH_LIBUV)
-    target_link_libraries(${PROJECT_NAME} PRIVATE uv)
+    target_link_libraries(${TARGET_NAME} PRIVATE uv)
 endif ()
 
 # Add include directories for this library
@@ -391,5 +342,8 @@ install(EXPORT ${targets_export_name} DESTINATION ${UWEBSOCKETS_CMAKE_DIR} NAMES
 
 # Copy pkgconfig
 install(FILES "${pkgconfig}" DESTINATION "${UWEBSOCKETS_PKGCONFIG_DIR}")
+
+# Copy libusockets.h to include directory
+install(FILES ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/libusockets.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # @todo Packaging ?
