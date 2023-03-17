@@ -86,32 +86,25 @@ Where such explicit notice is given, source code is licensed Apache License 2.0 
 
 To simplify integration in CMake-based environments, support with additional options to enable/disable OpenSSL and LibUV is available. Possible command line options:
 
-* ENABLE_OPENSSL: boolean (ON/OFF); default: OFF
-* ENABLE_LIBUV: boolean (ON/OFF); default: OFF
+* WITH_OPENSSL: boolean (ON/OFF); default: OFF
+* WITH_ZLIB: boolean (ON/OFF); default: OFF
+* WITH_LIBUV: boolean (ON/OFF); default: OFF
+* WITH_QUIC: boolean (ON/OFF); default: OFF
+* WITH_PROXY: boolean (ON/OFF); default: OFF
 * BUILD_EXAMPLES: boolean (ON/OFF); default: OFF
 
 Common usage (with defaults):
 
 ```sh
-mkdir build && cd build
-cmake ..
-cmake --build .
-cmake --install .
+cmake -S . -B build ..
+cmake --build build
+cmake --install build
 ```
 
-Usage with options - all explicitly enabled:
+Usage with options:
 
 ```sh
-mkdir build && cd build
-cmake -DENABLE_OPENSSL=ON -DENABLE_LIBUV=ON -DBUILD_EXAMPLES=ON ..
-cmake --build .
-cmake --install .
-```
-
-*Hint:*
-The generic cmake `--build` and `--install` calls may need a CMake version 3.15 or higher.
-Older versions (3.11+) can be used the usual way using the generated Makefile targets:
-```sh
-make
-make install
+cmake -S . -B build -DWITH_ZLIB=ON -DWITH_LIBUV=ON ..
+cmake --build build
+cmake --install build
 ```
