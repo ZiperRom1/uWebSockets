@@ -170,7 +170,6 @@ set(SOURCE_FILES
     ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/socket.c
     ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/eventing/epoll_kqueue.c
     ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/eventing/gcd.c
-    ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/libusockets.h
     )
 
 set(HEADERS_FILES
@@ -222,23 +221,22 @@ if (WITH_LIBUV)
     list(APPEND SOURCE_FILES ${CMAKE_CURRENT_LIST_DIR}/uSockets/src/eventing/libuv.c)
 endif ()
 
-if (BUILD_SHARED_LIBS)
-    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-endif ()
-
 # Add as a library
 add_library(${TARGET_NAME} "")
 add_library(${TARGET_NAME}::${TARGET_NAME} ALIAS ${TARGET_NAME})
 
 if (BUILD_SHARED_LIBS)
-    set_property(TARGET ${TARGET_NAME} PROPERTY CXX_VISIBILITY_PRESET default)
-    set_property(TARGET ${TARGET_NAME} PROPERTY VISIBILITY_INLINES_HIDDEN OFF)
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+    set_target_properties(${TARGET_NAME} PROPERTIES
+        CXX_VISIBILITY_PRESET default
+        VISIBILITY_INLINES_HIDDEN OFF
+    )
 endif ()
 
 # Add target sources
-target_sources(${TARGET_NAME} PRIVATE ${SOURCE_FILES})
-target_sources(${TARGET_NAME} PUBLIC FILE_SET HEADERS BASE_DIRS src FILES ${HEADERS_FILES})
+target_sources(${TARGET_NAME} PRIVATE ${SOURCE_FILES} PUBLIC FILE_SET HEADERS BASE_DIRS src FILES ${HEADERS_FILES})
 
 # Compilations definitions
 if (NOT WITH_ZLIB)
@@ -265,15 +263,15 @@ endif ()
 
 # Link
 if (WITH_ZLIB)
-    target_link_libraries(${TARGET_NAME} PRIVATE ${ZLIB_LIBRARIES})
+    target_link_libraries(${TARGET_NAME} PUBLIC ${ZLIB_LIBRARIES})
 endif ()
 
 if (WITH_OPENSSL)
-    target_link_libraries(${TARGET_NAME} PRIVATE ${OPENSSL_LIBRARIES})
+    target_link_libraries(${TARGET_NAME} PUBLIC ${OPENSSL_LIBRARIES})
 endif ()
 
 if (WITH_LIBUV)
-    target_link_libraries(${TARGET_NAME} PRIVATE uv)
+    target_link_libraries(${TARGET_NAME} PUBLIC uv)
 endif ()
 
 # Add include directories for this library
@@ -285,7 +283,7 @@ target_include_directories(${TARGET_NAME}
     $<INSTALL_INTERFACE:include/uwebsockets>)
 
 # Properties
-set_target_properties(${TARGET_NAME} PROPERTIES VERSION ${UWEBSOCKETS_VERSION} SOVERSION ${UWEBSOCKETS_VERSION} LINKER_LANGUAGE CXX)
+set_target_properties(${TARGET_NAME} PROPERTIES VERSION ${UWEBSOCKETS_VERSION} SOVERSION ${UWEBSOCKETS_VERSION})
 
 # ---- Install ---- #
 include(GNUInstallDirs)
@@ -310,16 +308,10 @@ set(UWEBSOCKETS_PKGCONFIG_DIR ${CMAKE_INSTALL_PREFIX}/pkgconfig CACHE PATH
 
 # Generate the version, config and target files into the build directory.
 # Generate version_config
-write_basic_package_version_file(
-    ${version_config}
-    VERSION ${UWEBSOCKETS_VERSION}
-    COMPATIBILITY AnyNewerVersion)
+write_basic_package_version_file(${version_config} VERSION ${UWEBSOCKETS_VERSION} COMPATIBILITY AnyNewerVersion)
 
 # Generate pkgconfig
-configure_file(
-    "${CMAKE_CURRENT_LIST_DIR}/cmake/uwebsockets.pc.in"
-    "${pkgconfig}"
-    @ONLY)
+configure_file("${CMAKE_CURRENT_LIST_DIR}/cmake/uwebsockets.pc.in" "${pkgconfig}" @ONLY)
 
 configure_package_config_file(
     ${CMAKE_CURRENT_LIST_DIR}/cmake/uwebsockets-config.cmake.in
@@ -327,8 +319,7 @@ configure_package_config_file(
     INSTALL_DESTINATION ${UWEBSOCKETS_CMAKE_DIR})
 
 # Install version, config files
-install(FILES ${project_config} ${version_config}
-    DESTINATION ${UWEBSOCKETS_CMAKE_DIR})
+install(FILES ${project_config} ${version_config} DESTINATION ${UWEBSOCKETS_CMAKE_DIR})
 
 # Install the library and headers.
 install(TARGETS ${TARGET_NAME} EXPORT ${targets_export_name}
