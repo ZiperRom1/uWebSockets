@@ -1,0 +1,89 @@
+# Copyright (C) 2005 - 2021 Settlers Freaks <sf-team at siedler25.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+name: Create Release
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Extract tag name
+        id: get_tag
+        run: echo "tag=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Set filename
+        id: filename
+        run: |
+          echo "archive=uWebSockets-${{steps.get_tag.outputs.tag}}.tar.gz" >> $GITHUB_OUTPUT
+          echo "archive_with_all_submodules=uWebSockets-with-all-submodules-${{steps.get_tag.outputs.tag}}.tar.gz" >> $GITHUB_OUTPUT
+      - name: Create source distribution
+        run: |
+          set -x
+          git submodule update --init
+          git rev-parse HEAD > revision.txt
+          
+          RELEASE_NAME="uWebSockets-${{steps.get_tag.outputs.tag}}"
+          RELEASE_NAME_WITH_ALL_SUBMODULES="uWebSockets-with-all-submodules-${{steps.get_tag.outputs.tag}}"
+          
+          mkdir "/tmp/${RELEASE_NAME}"
+          cp -r * "/tmp/${RELEASE_NAME}"
+          mv "/tmp/${RELEASE_NAME}" .
+          
+          mkdir "/tmp/${RELEASE_NAME_WITH_ALL_SUBMODULES}"
+          cp -r * "/tmp/${RELEASE_NAME_WITH_ALL_SUBMODULES}"
+          mv "/tmp/${RELEASE_NAME_WITH_ALL_SUBMODULES}" .
+          
+          # Cleanup
+          find "${RELEASE_NAME}" -name '.git*' -exec rm -rv {} \; || true
+          rm -rf ${RELEASE_NAME}/uSockets/boringssl ${RELEASE_NAME}/uSockets/lsquic ${RELEASE_NAME}/fuzzing/seed-corpus \
+          ${RELEASE_NAME}/fuzzing/libEpollFuzzer
+          
+          find "${RELEASE_NAME_WITH_ALL_SUBMODULES}" -name '.git*' -exec rm -rv {} \; || true
+          
+          # Archive
+          tar -czf ${{steps.filename.outputs.archive}} "${RELEASE_NAME}"
+          tar -czf ${{steps.filename.outputs.archive_with_all_submodules}} "${RELEASE_NAME_WITH_ALL_SUBMODULES}"
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            uWebSockets forked with CMake integration
+
+            - ${{steps.filename.outputs.archive}} contains all source files including the uwebsocket submodule
+            - ${{steps.filename.outputs.archive_with_all_submodules}} contains all source files including all the submodules
+          draft: false
+          prerelease: false
+      - name: Upload source distribution
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{steps.filename.outputs.archive}}
+          asset_name: ${{steps.filename.outputs.archive}}
+          asset_content_type: application/tar.gz
+      - name: Upload source distribution with boring ssl
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{steps.filename.outputs.archive_with_all_submodules}}
+          asset_name: ${{steps.filename.outputs.archive_with_all_submodules}}
+          asset_content_type: application/tar.gz
